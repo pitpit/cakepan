@@ -1,0 +1,21 @@
+{
+    "dump_files": {
+        "src/fonts/**.*": "fonts/",
+        "src/img/**/*" : "img/",
+        "src/favicon.ico": "../",
+        "src/apple-touch-icon*.png": "../",
+        "bower_components/fontawesome/fonts/*": "fonts",
+        "crossdomain.xml": "../",
+        "robots.txt": "../",
+        ".htaccess": "../"
+    },
+    "js": {
+        "requires": [
+            "bower_components/bootstrap/dist/js/bootstrap.js"
+        ],
+        "dump": [
+          "bower_components/modernizr/modernizr.js",
+          "bower_components/jquery/dist/jquery.js"
+        ]
+    }
+}
