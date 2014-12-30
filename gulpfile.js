@@ -24,7 +24,12 @@ var defaults = {
   //destination sub-directory (into build_dir) for assets (js, css, fonts, etc...)
   app_dir: '/app',
 
-  twig_dir: 'src/views/',
+  //if you want to use plain html files instead of twig, set html_dir to a directory path and set twig_dir to null
+  // html_dir: 'src/',
+  // twig_dir: null,
+
+  html_dir: null,
+  twig_dir: 'src/twig',
 
   //less config, `null` to ignore it
   less: {
@@ -109,6 +114,17 @@ gulp.task('less', function () {
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.less.dest_dir)));
 });
 
+gulp.task('html', function () {
+
+  if (config.html_dir == null) {
+    return null;
+  }
+
+  return gulp.src(path.join(config.html_dir, '**/*.html'))
+      .pipe(gulp.dest(config.build_dir))
+      .pipe(browserSync.reload({stream:true}));
+});
+
 gulp.task('twig', function () {
 
   if (config.twig_dir == null) {
@@ -136,7 +152,6 @@ gulp.task('dump', function() {
   Object.keys(config.dump_files).forEach(function(glob, index) {
 
     var dest = this[glob];
-
     var newStream = gulp.src(glob)
       .pipe(rename(function(filepath) {
         filepath.dirname = path.join(dest, filepath.dirname);
@@ -207,10 +222,17 @@ gulp.task('browser-sync', function() {
   });
 });
 
-gulp.task('default', ['clean', 'less', 'twig', 'dump', 'dumpjs', 'js']);
+gulp.task('default', ['clean', 'less', 'html', 'twig', 'dump', 'dumpjs', 'js']);
 
 gulp.task('start', ['browser-sync'], function() {
-  gulp.watch(path.join(config.twig_dir, '**/*.{twig,json}'), ['twig']);
+  if (config.html_dir != null) {
+    gulp.watch(path.join(config.html_dir, '**/*.html'), ['html']);
+  }
+
+  if (config.twig_dir != null) {
+    gulp.watch(path.join(config.twig_dir, '**/*.{twig,json}'), ['twig']);
+  }
+
   gulp.watch(path.join(config.js.source_dir, '**/*.js'), ['js']);
   gulp.watch(path.join(config.less.source_dir, '**/*.less'), ['less']);
   gulp.watch('gulpfile.js', ['default']);

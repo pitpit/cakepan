@@ -1,13 +1,12 @@
 {
     "dump_files": {
-        "src/fonts/**.*": "fonts/",
         "src/img/**/*" : "img/",
         "src/favicon.ico": "../",
         "src/apple-touch-icon*.png": "../",
         "bower_components/fontawesome/fonts/*": "fonts",
-        "crossdomain.xml": "../",
-        "robots.txt": "../",
-        ".htaccess": "../"
+        "src/crossdomain.xml": "../",
+        "src/robots.txt": "../",
+        "src/.htaccess": "../"
     },
     "js": {
         "requires": [
