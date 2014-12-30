@@ -1,7 +1,7 @@
 Cakepan
 =======
 
-Front-end template for Creads projects.
+Front-end template for websites.
 
 Getting Started
 ---------------
