@@ -92,24 +92,14 @@ gulp.task('less', function () {
     return null;
   }
 
-  var stream =  gulp.src(path.join(config.less.source_dir, config.less.files))
-    .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}));
-
-    if (argv.prod != undefined) {
-      stream = stream
-        .pipe(sourcemaps.init())
-          .pipe(less({
-            paths: config.less.includes_dir
-          }))
-          .pipe(minifyCSS({keepSpecialComments: 0}))
-        .pipe(sourcemaps.write(config.less.maps_dir))
-    } else {
-      stream = stream.pipe(less({
-        paths: config.less.includes_dir
-      }))
-    }
-
-  return stream
+  return gulp.src(path.join(config.less.source_dir, config.less.files))
+    .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
+    .pipe(sourcemaps.init())
+    .pipe(less({
+      paths: config.less.includes_dir
+    }))
+    .pipe(gulpif(argv.prod !== undefined, minifyCSS()))
+    .pipe(sourcemaps.write(config.less.maps_dir))
     .pipe(plumber.stop())
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.less.dest_dir)));
 });
@@ -195,21 +185,13 @@ gulp.task('js', ['lint'], function() {
   var files = config.js.requires;
   files.push(path.join(config.js.source_dir, config.js.files));
 
-  var stream = gulp.src(files);
-
-  if (argv.prod != undefined) {
-    stream = stream
-      .pipe(sourcemaps.init())
-        .pipe(concat(config.js.dest_filename))
-        .pipe(uglify())
-      .pipe(sourcemaps.write(config.js.maps_dir))
-  } else {
-    stream = stream.pipe(concat(config.js.dest_filename))
-  }
-
-  return stream
-      .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
-      .pipe(browserSync.reload({stream:true}));
+  return gulp.src(files)
+    .pipe(sourcemaps.init())
+    .pipe(concat(config.js.dest_filename))
+    .pipe(gulpif(argv.prod !== undefined, uglify()))
+    .pipe(sourcemaps.write(config.js.maps_dir))
+    .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
+    .pipe(browserSync.reload({stream:true}));
 });
 
 gulp.task('browser-sync', function() {
