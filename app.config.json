@@ -1,9 +1,10 @@
 {
     "dump_files": {
-        "src/img/**/*" : "img/",
+        "src/img/**/*.{gif,png,jpg}" : "img/",
+        "src/fonts/**/*.{eot,svg,woff,ttf,otf}": "fonts/",
         "src/favicon.ico": "../",
         "src/apple-touch-icon*.png": "../",
-        "bower_components/fontawesome/fonts/*": "fonts",
+        "bower_components/fontawesome/fonts/*.{eot,svg,woff,ttf,otf}": "fonts",
         "src/crossdomain.xml": "../",
         "src/robots.txt": "../",
         "src/.htaccess": "../"

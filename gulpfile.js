@@ -217,5 +217,6 @@ gulp.task('start', ['browser-sync'], function() {
 
   gulp.watch(path.join(config.js.source_dir, '**/*.js'), ['js']);
   gulp.watch(path.join(config.less.source_dir, '**/*.less'), ['less']);
+  gulp.watch(Object.keys(config.dump_files), ['dump']);
   gulp.watch('gulpfile.js', ['default']);
 });
