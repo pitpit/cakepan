@@ -99,10 +99,10 @@ gulp.task('less', function () {
       paths: config.less.includes_dir
     }))
     .pipe(gulpif(argv.prod !== undefined, minifyCSS()))
-    .pipe(sourcemaps.write(config.less.maps_dir))
     .pipe(plumber.stop())
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.less.dest_dir)))
-    .pipe(browserSync.reload({stream:true}));
+    .pipe(browserSync.reload({stream:true}))
+    .pipe(sourcemaps.write(config.less.maps_dir));
 });
 
 gulp.task('html', function () {
@@ -190,9 +190,9 @@ gulp.task('js', ['lint'], function() {
     .pipe(sourcemaps.init())
     .pipe(concat(config.js.dest_filename))
     .pipe(gulpif(argv.prod !== undefined, uglify()))
-    .pipe(sourcemaps.write(config.js.maps_dir))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
-    .pipe(browserSync.reload({stream:true}));
+    .pipe(browserSync.reload({stream:true}))
+    .pipe(sourcemaps.write(config.js.maps_dir));
 });
 
 gulp.task('browser-sync', function() {
@@ -220,5 +220,5 @@ gulp.task('start', ['browser-sync'], function() {
   gulp.watch(path.join(config.js.source_dir, '**/*.js'), ['js']);
   gulp.watch(path.join(config.less.source_dir, '**/*.less'), ['less']);
   gulp.watch(Object.keys(config.dump_files), ['dump']);
-  gulp.watch('gulpfile.js', ['default']);
+  // gulp.watch('gulpfile.js', ['default']);
 });
