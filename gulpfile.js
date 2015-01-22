@@ -101,7 +101,8 @@ gulp.task('less', function () {
     .pipe(gulpif(argv.prod !== undefined, minifyCSS()))
     .pipe(sourcemaps.write(config.less.maps_dir))
     .pipe(plumber.stop())
-    .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.less.dest_dir)));
+    .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.less.dest_dir)))
+    .pipe(browserSync.reload({stream:true}));
 });
 
 gulp.task('html', function () {
@@ -197,6 +198,7 @@ gulp.task('js', ['lint'], function() {
 gulp.task('browser-sync', function() {
   browserSync.init([path.join(config.build_dir, config.app_dir, '**/**.*')], {
     open: ((argv['no'] == undefined)?true:false),
+    injectChanges: true,
     server: {
       directory: true,
       baseDir: config.build_dir
