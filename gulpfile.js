@@ -187,9 +187,11 @@ gulp.task('js', ['lint'], function() {
   files.push(path.join(config.js.source_dir, config.js.files));
 
   return gulp.src(files)
+    .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
     .pipe(sourcemaps.init())
     .pipe(concat(config.js.dest_filename))
     .pipe(gulpif(argv.prod !== undefined, uglify()))
+    .pipe(plumber.stop())
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
     .pipe(browserSync.reload({stream:true}))
     .pipe(sourcemaps.write(config.js.maps_dir));
