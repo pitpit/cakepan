@@ -51,6 +51,12 @@ If you want to start dev webserver without relaunching a browser window:
 
     gulp start --no
 
+If you want to enable proxy mode:
+
+    gulp --proxy
+
+> don't forget to configure it !
+
 If you want to clean build directory:
 
     gulp clean
