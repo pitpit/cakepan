@@ -10,9 +10,6 @@
         "src/.htaccess": "../"
     },
     "js": {
-        "requires": [
-            "bower_components/bootstrap/dist/js/bootstrap.js"
-        ],
         "dump": [
           "bower_components/modernizr/modernizr.js",
           "bower_components/jquery/dist/jquery.js"
