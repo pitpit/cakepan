@@ -208,8 +208,6 @@ gulp.task('browser-sync', function() {
   });
 });
 
-gulp.task('default', ['clean', 'less', 'html', 'twig', 'dump', 'dumpjs', 'js']);
-
 gulp.task('start', ['default', 'browser-sync'], function() {
   if (config.html_dir != null) {
     gulp.watch(path.join(config.html_dir, '**/*.html'), ['html']);
@@ -224,3 +222,6 @@ gulp.task('start', ['default', 'browser-sync'], function() {
   gulp.watch(Object.keys(config.dump_files), ['dump']);
   // gulp.watch('gulpfile.js', ['default']);
 });
+
+gulp.task('default', ['clean', 'less', 'html', 'twig', 'dump', 'dumpjs', 'js']);
+
