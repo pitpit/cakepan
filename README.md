@@ -1,7 +1,7 @@
 Cakepan
 =======
 
-Front-end template for websites.
+Frontend developer toolkit to integrate your website in HTML/JS/CSS. Designed to work expressly with Symfony2, Silex and Wordpress project.
 
 Provides a way to quickly design the front-end of a new responsive website.
 Can be easily plugged to Symfony2, Silex or Wordpress.

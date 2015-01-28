@@ -198,9 +198,11 @@ gulp.task('js', ['lint'], function() {
   }
 
   return gulp.src(path.join(config.js.source_dir, config.js.files))
+    .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
     .pipe(sourcemaps.init())
     .pipe(concat(config.js.dest_main_filename))
     .pipe(gulpif(argv.prod !== undefined, uglify()))
+    .pipe(plumber.stop())
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
     .pipe(browserSync.reload({stream:true}))
     .pipe(sourcemaps.write(config.js.maps_dir));
@@ -217,9 +219,7 @@ gulp.task('browser-sync', function() {
   });
 });
 
-gulp.task('default', ['clean', 'less', 'html', 'twig', 'dump', 'dumpjs', 'vendor-js', 'js']);
-
-gulp.task('start', ['browser-sync'], function() {
+gulp.task('start', ['default', 'browser-sync'], function() {
   if (config.html_dir != null) {
     gulp.watch(path.join(config.html_dir, '**/*.html'), ['html']);
   }
@@ -234,3 +234,5 @@ gulp.task('start', ['browser-sync'], function() {
   gulp.watch(Object.keys(config.dump_files), ['dump']);
   // gulp.watch('gulpfile.js', ['default']);
 });
+
+gulp.task('default', ['clean', 'less', 'html', 'twig', 'dump', 'dumpjs', 'vendor-js', 'js']);
