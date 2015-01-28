@@ -15,7 +15,9 @@ var gulp = require('gulp')
     rename = require('gulp-rename'),
     merge = require('merge-stream'),
     sourcemaps = require('gulp-sourcemaps')
-    deepmerge = require('deepmerge');
+    deepmerge = require('deepmerge'),
+    wiredep = require('wiredep')
+;
 
 var defaults = {
   //destination directory (dev only)
@@ -66,11 +68,17 @@ var defaults = {
     //destination subdirectory for built files (into buil_dir/app_dir)
     dest_dir: 'js/',
 
-    //concatened filename
-    dest_filename: 'main.js',
+    // main concatened filename
+    dest_main_filename: 'main.js',
+
+    // vendor concatened filename
+    dest_vendor_filename: 'vendor.js',
 
     //js files to dump into dest_dir (after uglification for prod)
     dump: [],
+
+    // js vendors to exclude from wiredep
+    exclude_vendors: [],
 
     //where to put maps files (prod only)
     maps_dir: '../maps/'
@@ -175,6 +183,15 @@ gulp.task('lint', function() {
   return gulp.src(path.join(config.js.source_dir, config.js.files))
     .pipe(jshint())
     .pipe(jshint.reporter('default'))
+  ;
+});
+
+gulp.task('vendor-js', function() {
+  return gulp.src(wiredep({ exclude: config.js.exclude_vendors.concat(config.js.dump) }).js)
+    .pipe(concat(config.js.dest_vendor_filename))
+    .pipe(gulpif(argv.prod !== undefined, uglify()))
+    .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
+  ;
 });
 
 gulp.task('js', ['lint'], function() {
@@ -183,13 +200,10 @@ gulp.task('js', ['lint'], function() {
     return null;
   }
 
-  var files = config.js.requires;
-  files.push(path.join(config.js.source_dir, config.js.files));
-
-  return gulp.src(files)
+  return gulp.src(path.join(config.js.source_dir, config.js.files))
     .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
     .pipe(sourcemaps.init())
-    .pipe(concat(config.js.dest_filename))
+    .pipe(concat(config.js.dest_main_filename))
     .pipe(gulpif(argv.prod !== undefined, uglify()))
     .pipe(plumber.stop())
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
@@ -219,9 +233,9 @@ gulp.task('start', ['default', 'browser-sync'], function() {
 
   gulp.watch(path.join(config.js.source_dir, '**/*.js'), ['js']);
   gulp.watch(path.join(config.less.source_dir, '**/*.less'), ['less']);
+  gulp.watch(['bower_components/', 'bower.json'], ['vendor-js']);
   gulp.watch(Object.keys(config.dump_files), ['dump']);
   // gulp.watch('gulpfile.js', ['default']);
 });
 
-gulp.task('default', ['clean', 'less', 'html', 'twig', 'dump', 'dumpjs', 'js']);
-
+gulp.task('default', ['clean', 'less', 'html', 'twig', 'dump', 'dumpjs', 'vendor-js', 'js']);

@@ -10,13 +10,6 @@
         "src/.htaccess": "../"
     },
     "js": {
-        "requires": [
-            "bower_components/bootstrap/dist/js/bootstrap.js",
-            "bower_components/jquery-fullscreen/jquery.fullscreen.js",
-            "bower_components/jquery.lazyload/jquery.lazyload.js",
-            "bower_components/viewport-units-buggyfill/viewport-units-buggyfill.js",
-            "bower_components/velocity/velocity.js",
-        ],
         "dump": [
           "bower_components/modernizr/modernizr.js",
           "bower_components/jquery/dist/jquery.js"
