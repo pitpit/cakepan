@@ -82,7 +82,7 @@ var defaults = {
     url: 'http://127.0.0.1:8000',
 
     // where to look for source files (relative to root)
-    source_dir: '../app/Resources/views/'
+    watch_dir: '../app/Resources/views/'
   }
 }
 
@@ -242,7 +242,7 @@ gulp.task('start', ['browser-sync'], function() {
   }
 
   if (argv['proxy'] !== undefined) {
-    gulp.watch(path.join(config.proxy.source_dir, '**/*.twig'), ['browser-sync-refresh']);
+    gulp.watch(path.join(config.proxy.watch_dir, '**/*.twig'), ['browser-sync-refresh']);
   }
 
   gulp.watch(path.join(config.js.source_dir, '**/*.js'), ['js']);
