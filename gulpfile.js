@@ -77,6 +77,9 @@ var defaults = {
     //js files to dump into dest_dir (after uglification for prod)
     dump: [],
 
+    // js vendors to exclude from wiredep
+    exclude_vendors: [],
+
     //where to put maps files (prod only)
     maps_dir: '../maps/'
   }
@@ -184,7 +187,7 @@ gulp.task('lint', function() {
 });
 
 gulp.task('vendor-js', function() {
-  return gulp.src(wiredep({ exclude: config.js.dump }).js)
+  return gulp.src(wiredep({ exclude: config.js.exclude_vendors.concat(config.js.dump) }).js)
     .pipe(concat(config.js.dest_vendor_filename))
     .pipe(gulpif(argv.prod !== undefined, uglify()))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
