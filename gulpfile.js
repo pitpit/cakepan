@@ -82,16 +82,29 @@ var defaults = {
 
     //where to put maps files (prod only)
     maps_dir: '../maps/'
+  },
+
+  // proxy mode config - !!! DON'T FORGET TO UPDATE BUILD DIR PATH
+  proxy: {
+    // proxy url
+    url: 'http://127.0.0.1:8000',
+
+    // where to look for source files (relative to root)
+    watch_dir: '../app/Resources/views/'
   }
 }
 
 var config = deepmerge(defaults, require('./app.config.json'));
 
+// If proxy mode enabled disable twig_dir and html_dir
+config.twig_dir = (argv['proxy'] !== undefined) ? null : config.twig_dir;
+config.html_dir = (argv['proxy'] !== undefined) ? null : config.html_dir;
+
 //uncomment this line and comment the line before if you want to build the sdk
 // var config = deepmerge(defaults, require('./sdk.config.json'));
 
 gulp.task('clean', function (cb) {
-    rimraf.sync(config.build_dir, cb);
+    rimraf.sync(path.join(config.build_dir, config.app_dir), cb);
 });
 
 gulp.task('less', function () {
@@ -212,14 +225,29 @@ gulp.task('js', ['lint'], function() {
 });
 
 gulp.task('browser-sync', function() {
-  browserSync.init([path.join(config.build_dir, config.app_dir, '**/**.*')], {
+  var browserSyncConfig = {
     open: ((argv['no'] == undefined)?true:false),
-    injectChanges: true,
-    server: {
+    online: false
+  };
+
+  if (argv['proxy'] === undefined) {
+    browserSyncConfig.server = {
       directory: true,
       baseDir: config.build_dir
-    }
-  });
+    };
+  } else {
+    browserSyncConfig.log = true;
+    browserSyncConfig.proxy = config.proxy.url;
+  }
+
+  browserSync.init(
+    [path.join(config.build_dir, config.app_dir, '**/**.*')],
+    browserSyncConfig
+  );
+});
+
+gulp.task('browser-sync-refresh', function() {
+  browserSync.reload();
 });
 
 gulp.task('start', ['default', 'browser-sync'], function() {
@@ -229,6 +257,10 @@ gulp.task('start', ['default', 'browser-sync'], function() {
 
   if (config.twig_dir != null) {
     gulp.watch(path.join(config.twig_dir, '**/*.{twig,json}'), ['twig']);
+  }
+
+  if (argv['proxy'] !== undefined) {
+    gulp.watch(path.join(config.proxy.watch_dir, '**/*.twig'), ['browser-sync-refresh']);
   }
 
   gulp.watch(path.join(config.js.source_dir, '**/*.js'), ['js']);
