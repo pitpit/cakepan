@@ -76,7 +76,7 @@ var defaults = {
     maps_dir: '../maps/'
   },
 
-  // proxy mode config - !!! DON'T FORGET TO UPDATE BUILD DIR PATH AND PUT twig_dir TO NULL
+  // proxy mode config - !!! DON'T FORGET TO UPDATE BUILD DIR PATH
   proxy: {
     // proxy url
     url: 'http://127.0.0.1:8000',
@@ -87,6 +87,10 @@ var defaults = {
 }
 
 var config = deepmerge(defaults, require('./app.config.json'));
+
+// If proxy mode enabled disable twig_dir and html_dir
+config.twig_dir = (argv['proxy'] !== undefined) ? null : config.twig_dir;
+config.html_dir = (argv['proxy'] !== undefined) ? null : config.html_dir;
 
 //uncomment this line and comment the line before if you want to build the sdk
 // var config = deepmerge(defaults, require('./sdk.config.json'));
