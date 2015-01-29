@@ -104,7 +104,7 @@ config.html_dir = (argv['proxy'] !== undefined) ? null : config.html_dir;
 // var config = deepmerge(defaults, require('./sdk.config.json'));
 
 gulp.task('clean', function () {
-    del.sync(path.join(config.build_dir, config.app_dir));
+  del.sync(path.join(config.build_dir, config.app_dir), {force: true});
 });
 
 gulp.task('less', function () {
