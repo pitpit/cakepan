@@ -4,7 +4,7 @@ var gulp = require('gulp')
     jshint = require('gulp-jshint'),
     uglify = require('gulp-uglify'),
     concat = require('gulp-concat'),
-    rimraf = require('rimraf'),
+    del = require('del'),
     minifyCSS = require('gulp-minify-css'),
     plumber = require('gulp-plumber'),
     gulpif = require('gulp-if'),
@@ -103,8 +103,8 @@ config.html_dir = (argv['proxy'] !== undefined) ? null : config.html_dir;
 //uncomment this line and comment the line before if you want to build the sdk
 // var config = deepmerge(defaults, require('./sdk.config.json'));
 
-gulp.task('clean', function (cb) {
-    rimraf.sync(path.join(config.build_dir, config.app_dir), cb);
+gulp.task('clean', function () {
+    del.sync(path.join(config.build_dir, config.app_dir));
 });
 
 gulp.task('less', function () {
