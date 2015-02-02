@@ -17,6 +17,7 @@
     "bower": "^1.3.11",
     "browser-sync": "^1.5.1",
     "deepmerge": "^0.2.7",
+    "del": "^1.1.1",
     "gulp": "^3.8.8",
     "gulp-concat": "^2.4.1",
     "gulp-concat-css": "^0.1.4",
@@ -27,14 +28,13 @@
     "gulp-notify": "^1.8.0",
     "gulp-plumber": "^0.6.5",
     "gulp-rename": "^1.2.0",
+    "gulp-replace-task": "^0.1.0",
     "gulp-sourcemaps": "^1.2.8",
     "gulp-twigger": "https://github.com/instantiate/gulp-twigger/tarball/master",
     "gulp-uglify": "^1.0.1",
     "merge-stream": "^0.1.6",
     "minimist": "^1.1.0",
-    "wiredep": "^2.2.2",
-    "del": "^1.1.1"
+    "wiredep": "^2.2.2"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }
