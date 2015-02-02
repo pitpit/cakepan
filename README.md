@@ -22,6 +22,7 @@ Getting Started
 
 Install project (with NPM):
 
+    npm install -g create-project
     create-project . creads/cakepan
 
 or install project (with wget):
