@@ -84,7 +84,7 @@ var defaults = {
     maps_dir: '../maps/'
   },
 
-  // proxy mode config - !!! DON'T FORGET TO UPDATE BUILD DIR PATH
+  // proxy mode default config
   proxy: {
     // proxy url
     url: 'http://127.0.0.1:8000',
@@ -96,9 +96,13 @@ var defaults = {
 
 var config = deepmerge(defaults, require('./app.config.json'));
 
+if (argv['mode']) {
+  config = deepmerge(config, require('./' + argv['mode'] + '.config.json'));
+}
+
 // If proxy mode enabled disable twig_dir and html_dir
-config.twig_dir = (argv['proxy'] !== undefined) ? null : config.twig_dir;
-config.html_dir = (argv['proxy'] !== undefined) ? null : config.html_dir;
+config.twig_dir = (argv['mode'] === 'proxy') ? null : config.twig_dir;
+config.html_dir = (argv['mode'] === 'proxy') ? null : config.html_dir;
 
 //uncomment this line and comment the line before if you want to build the sdk
 // var config = deepmerge(defaults, require('./sdk.config.json'));
@@ -230,14 +234,17 @@ gulp.task('browser-sync', function() {
     online: false
   };
 
-  if (argv['proxy'] === undefined) {
-    browserSyncConfig.server = {
-      directory: true,
-      baseDir: config.build_dir
-    };
-  } else {
-    browserSyncConfig.log = true;
-    browserSyncConfig.proxy = config.proxy.url;
+  switch (argv['mode']) {
+    case 'proxy':
+      browserSyncConfig.log = true;
+      browserSyncConfroxy = config.proxy.url;
+      break;
+
+    default:
+      browserSyncConfig.server = {
+        directory: true,
+        baseDir: config.build_dir
+      };
   }
 
   browserSync.init(
@@ -259,7 +266,7 @@ gulp.task('start', ['default', 'browser-sync'], function() {
     gulp.watch(path.join(config.twig_dir, '**/*.{twig,json}'), ['twig']);
   }
 
-  if (argv['proxy'] !== undefined) {
+  if (argv['mode'] === 'proxy') {
     gulp.watch(path.join(config.proxy.watch_dir, '**/*.twig'), ['browser-sync-refresh']);
   }
 
