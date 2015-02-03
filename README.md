@@ -20,7 +20,16 @@ Using best in class tools:
 Getting Started
 ---------------
 
-Install dependencies:
+Install project (with NPM):
+
+    npm install -g create-project
+    create-project . creads/cakepan
+
+or install project (with wget):
+
+    wget -qO- https://github.com/creads/cakepan/archive/master.tar.gz | tar -xvz -C ./ && mv cakepan-master/* . && rm -rf cakepan-master
+
+then install dependencies:
 
     npm install -g bower browser-sync gulp
     npm install
