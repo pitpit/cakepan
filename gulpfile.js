@@ -84,18 +84,23 @@ var defaults = {
     maps_dir: '../maps/'
   },
 
-  // proxy mode default config
-  proxy: {
-    // proxy url
-    url: 'http://127.0.0.1:8000',
+  // default config related to browserSync
+  browserSync: {
+    // open new tab in browser
+    open: ((argv['no'] == undefined)?true:false),
 
-    // where to look for source files (relative to root)
-    watch_dir: '../app/Resources/views/',
+    // assumes you're online
+    online: false,
 
-    // file to watch in watch_dir
-    watch_files: '**/*.twig'
+    // config for built-in static server
+    server : {
+      directory: true
+    }
   }
 }
+
+// Add config for browserSync server baseDir
+defaults.browserSync.server.baseDir = defaults.build_dir;
 
 var config = deepmerge(defaults, require('./app.config.json'));
 
@@ -228,27 +233,9 @@ gulp.task('js', ['lint'], function() {
 });
 
 gulp.task('browser-sync', function() {
-  var browserSyncConfig = {
-    open: ((argv['no'] == undefined)?true:false),
-    online: false
-  };
-
-  switch (argv['mode']) {
-    case 'proxy':
-      browserSyncConfig.log = true;
-      browserSyncConfroxy = config.proxy.url;
-      break;
-
-    default:
-      browserSyncConfig.server = {
-        directory: true,
-        baseDir: config.build_dir
-      };
-  }
-
   browserSync.init(
     [path.join(config.build_dir, config.app_dir, '**/**.*')],
-    browserSyncConfig
+    config.browserSync
   );
 });
 
