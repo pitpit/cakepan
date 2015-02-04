@@ -103,10 +103,6 @@ if (argv['mode']) {
   config = deepmerge(config, require('./' + argv['mode'] + '.config.json'));
 }
 
-// If proxy mode enabled disable twig_dir and html_dir
-config.twig_dir = (argv['mode'] === 'proxy') ? null : config.twig_dir;
-config.html_dir = (argv['mode'] === 'proxy') ? null : config.html_dir;
-
 //uncomment this line and comment the line before if you want to build the sdk
 // var config = deepmerge(defaults, require('./sdk.config.json'));
 

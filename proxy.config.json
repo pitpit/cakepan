@@ -1,3 +1,5 @@
 {
-  "build_dir": "web/"
+  "build_dir": "web/",
+  "twig_dir": null,
+  "html_dir": null
 }
