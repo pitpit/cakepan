@@ -16,10 +16,15 @@ var gulp = require('gulp')
     merge = require('merge-stream'),
     sourcemaps = require('gulp-sourcemaps')
     deepmerge = require('deepmerge'),
-    wiredep = require('wiredep')
+    wiredep = require('wiredep'),
+    replace = require('gulp-replace-task')
 ;
 
 var defaults = {
+
+  // version added only with prod option, can be set to null
+  version: '0.0.0',
+
   //destination directory (dev only)
   build_dir: 'build/',
 
@@ -121,6 +126,9 @@ gulp.task('less', function () {
     }))
     .pipe(gulpif(argv.prod !== undefined, minifyCSS()))
     .pipe(plumber.stop())
+    .pipe(gulpif(argv.prod !== undefined, rename({
+      suffix: (config.version !== null) ? '-' + config.version : ''
+    })))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.less.dest_dir)))
     .pipe(browserSync.reload({stream:true}))
     .pipe(sourcemaps.write(config.less.maps_dir));
@@ -133,8 +141,17 @@ gulp.task('html', function () {
   }
 
   return gulp.src(path.join(config.html_dir, '**/*.html'))
-      .pipe(gulp.dest(config.build_dir))
-      .pipe(browserSync.reload({stream:true}));
+    .pipe(replace({
+      patterns: [
+        {
+          match: 'version',
+          replacement: (argv['prod'] && config.version !== null) ? '-' + config.version : ''
+        }
+      ]
+    }))
+    .pipe(gulp.dest(config.build_dir))
+    .pipe(browserSync.reload({stream:true}))
+  ;
 });
 
 gulp.task('twig', function () {
@@ -148,6 +165,14 @@ gulp.task('twig', function () {
       .pipe(twigger({base: config.twig_dir}))
       .pipe(rename(function (path) {
         path.extname = ''; // strip the .twig extension
+      }))
+      .pipe(replace({
+        patterns: [
+          {
+            match: 'version',
+            replacement: (argv['prod'] && config.version !== null) ? '-' + config.version : ''
+          }
+        ]
       }))
       .pipe(gulp.dest(config.build_dir))
       .pipe(plumber.stop())
@@ -203,6 +228,9 @@ gulp.task('vendor-js', function() {
   return gulp.src(wiredep({ exclude: config.js.exclude_vendors.concat(config.js.dump) }).js)
     .pipe(concat(config.js.dest_vendor_filename))
     .pipe(gulpif(argv.prod !== undefined, uglify()))
+    .pipe(gulpif(argv.prod !== undefined, rename({
+      suffix: (config.version !== null) ? '-' + config.version : ''
+    })))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
   ;
 });
@@ -219,6 +247,9 @@ gulp.task('js', ['lint'], function() {
     .pipe(concat(config.js.dest_main_filename))
     .pipe(gulpif(argv.prod !== undefined, uglify()))
     .pipe(plumber.stop())
+    .pipe(gulpif(argv.prod !== undefined, rename({
+      suffix: (config.version !== null) ? '-' + config.version : ''
+    })))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
     .pipe(browserSync.reload({stream:true}))
     .pipe(sourcemaps.write(config.js.maps_dir));
