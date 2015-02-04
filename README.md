@@ -52,7 +52,7 @@ If you want to start dev webserver without relaunching a browser window:
     gulp start --no
 
 Proxy mode allows to serve pages from another webserver (like PHP) while continuing to edit JS and CCS into Cakepan source dir.
-If you want to enable proxy mode set proxy.url, build\_dir and proxy.watch\_dir in your proxy.config.json and run:
+If you want to enable proxy mode set build\_dir, proxy.url, proxy.watch\_dir and proxy.watch_files in your proxy.config.json and run:
 
     gulp --mode=proxy
 
