@@ -252,7 +252,7 @@ gulp.task('start', ['default', 'browser-sync'], function() {
     gulp.watch(path.join(config.twig_dir, '**/*.{twig,json}'), ['twig']);
   }
 
-  if (argv['mode'] === 'proxy') {
+  if (config.twig_dir === null && config.html_dir === null) {
     gulp.watch(path.join(config.proxy.watch_dir, config.proxy.watch_files), ['browser-sync-refresh']);
   }
 
