@@ -98,6 +98,7 @@ var defaults = {
     }
   },
 
+  // Defaul proxy configuration
   proxy: {
     url: false,
     watch_files: null
