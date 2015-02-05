@@ -96,6 +96,11 @@ var defaults = {
     server : {
       directory: true
     }
+  },
+
+  proxy: {
+    url: false,
+    watch_files: null
   }
 }
 
@@ -235,7 +240,7 @@ gulp.task('js', ['lint'], function() {
 gulp.task('browser-sync', function() {
   browserSync.init(
     [path.join(config.build_dir, config.app_dir, '**/**.*')],
-    config.browserSync
+    deepmerge(config.browserSync, { proxy: config.proxy.url })
   );
 });
 
@@ -253,7 +258,7 @@ gulp.task('start', ['default', 'browser-sync'], function() {
   }
 
   if (config.twig_dir === null && config.html_dir === null) {
-    gulp.watch(path.join(config.proxy.watch_dir, config.proxy.watch_files), ['browser-sync-refresh']);
+    gulp.watch(config.proxy.watch_files, ['browser-sync-refresh']);
   }
 
   gulp.watch(path.join(config.js.source_dir, '**/*.js'), ['js']);

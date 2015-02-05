@@ -4,11 +4,10 @@
   "html_dir": null,
   "browserSync": {
     "server": false,
-    "log": true,
-    "proxy": "http://127.0.0.1:8000"
+    "log": true
   },
   "proxy": {
-    "watch_dir": "../app/Resources/views/",
-    "watch_files": "**/*.twig"
+    "hostname": "http://127.0.0.1:8000",
+    "watch_files": "../app/Resources/views/**/*.twig"
   }
 }
