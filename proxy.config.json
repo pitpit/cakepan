@@ -1,0 +1,13 @@
+{
+  "build_dir": "web/",
+  "twig_dir": null,
+  "html_dir": null,
+  "browserSync": {
+    "server": false,
+    "log": true
+  },
+  "proxy": {
+    "url": "http://127.0.0.1:8000",
+    "watch_files": "../app/Resources/views/**/*.twig"
+  }
+}

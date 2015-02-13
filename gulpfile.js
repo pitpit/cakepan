@@ -89,21 +89,35 @@ var defaults = {
     maps_dir: '../maps/'
   },
 
-  // proxy mode config - !!! DON'T FORGET TO UPDATE BUILD DIR PATH
-  proxy: {
-    // proxy url
-    url: 'http://127.0.0.1:8000',
+  // default config related to browserSync
+  browserSync: {
+    // open new tab in browser
+    open: ((argv['no'] == undefined)?true:false),
 
-    // where to look for source files (relative to root)
-    watch_dir: '../app/Resources/views/'
+    // assumes you're online
+    online: false,
+
+    // config for built-in static server
+    server : {
+      directory: true
+    }
+  },
+
+  // Defaul proxy configuration
+  proxy: {
+    url: false,
+    watch_files: null
   }
 }
 
+// Add config for browserSync server baseDir
+defaults.browserSync.server.baseDir = defaults.build_dir;
+
 var config = deepmerge(defaults, require('./app.config.json'));
 
-// If proxy mode enabled disable twig_dir and html_dir
-config.twig_dir = (argv['proxy'] !== undefined) ? null : config.twig_dir;
-config.html_dir = (argv['proxy'] !== undefined) ? null : config.html_dir;
+if (argv['mode']) {
+  config = deepmerge(config, require('./' + argv['mode'] + '.config.json'));
+}
 
 //uncomment this line and comment the line before if you want to build the sdk
 // var config = deepmerge(defaults, require('./sdk.config.json'));
@@ -256,24 +270,9 @@ gulp.task('js', ['lint'], function() {
 });
 
 gulp.task('browser-sync', function() {
-  var browserSyncConfig = {
-    open: ((argv['no'] == undefined)?true:false),
-    online: false
-  };
-
-  if (argv['proxy'] === undefined) {
-    browserSyncConfig.server = {
-      directory: true,
-      baseDir: config.build_dir
-    };
-  } else {
-    browserSyncConfig.log = true;
-    browserSyncConfig.proxy = config.proxy.url;
-  }
-
   browserSync.init(
     [path.join(config.build_dir, config.app_dir, '**/**.*')],
-    browserSyncConfig
+    deepmerge(config.browserSync, { proxy: config.proxy.url })
   );
 });
 
@@ -290,8 +289,8 @@ gulp.task('start', ['default', 'browser-sync'], function() {
     gulp.watch(path.join(config.twig_dir, '**/*.{twig,json}'), ['twig']);
   }
 
-  if (argv['proxy'] !== undefined) {
-    gulp.watch(path.join(config.proxy.watch_dir, '**/*.twig'), ['browser-sync-refresh']);
+  if (config.twig_dir === null && config.html_dir === null) {
+    gulp.watch(config.proxy.watch_files, ['browser-sync-refresh']);
   }
 
   gulp.watch(path.join(config.js.source_dir, '**/*.js'), ['js']);
