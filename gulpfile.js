@@ -126,9 +126,6 @@ try {
   ;
 }
 
-//uncomment this line and comment the line before if you want to build the sdk
-// var config = deepmerge(defaults, require('./sdk.config.json'));
-
 gulp.task('clean', function () {
   del.sync(path.join(config.build_dir, config.app_dir), {force: true});
 });
@@ -231,9 +228,7 @@ gulp.task('dumpjs', function() {
   var stream = gulp.src(config.js.dump);
 
   if (argv.prod != undefined) {
-    // .pipe(sourcemaps.init({loadMaps: true}))
     stream = stream.pipe(uglify())
-    // .pipe(sourcemaps.write(config.js.maps_dir))
   }
 
   return stream.pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
@@ -306,7 +301,6 @@ gulp.task('start', ['default', 'browser-sync'], function() {
   gulp.watch(path.join(config.less.source_dir, '**/*.less'), ['less']);
   gulp.watch(['bower_components/', 'bower.json'], ['vendor-js']);
   gulp.watch(Object.keys(config.dump_files), ['dump']);
-  // gulp.watch('gulpfile.js', ['default']);
 });
 
 gulp.task('default', ['clean', 'less', 'html', 'twig', 'dump', 'dumpjs', 'vendor-js', 'js']);
