@@ -141,18 +141,19 @@ gulp.task('less', function () {
 
   return gulp.src(path.join(config.less.source_dir, config.less.files))
     .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
-    .pipe(sourcemaps.init())
-    .pipe(less({
-      paths: config.less.includes_dir
-    }))
-    .pipe(gulpif(argv.prod !== undefined, minifyCSS()))
-    .pipe(plumber.stop())
-    .pipe(gulpif(argv.prod !== undefined, rename({
-      suffix: (config.version !== null) ? '-' + config.version : ''
-    })))
+    .pipe(gulpif(argv.mode === 'prod', sourcemaps.init()))
+      .pipe(less({
+        paths: config.less.includes_dir
+      }))
+      .pipe(gulpif(argv.prod !== undefined, minifyCSS()))
+      .pipe(gulpif(argv.prod !== undefined, rename({
+        suffix: (config.version !== null) ? '-' + config.version : ''
+      })))
+    .pipe(gulpif(argv.mode === 'prod', sourcemaps.write(config.less.maps_dir)))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.less.dest_dir)))
     .pipe(browserSync.reload({stream:true}))
-    .pipe(sourcemaps.write(config.less.maps_dir));
+    .pipe(plumber.stop())
+  ;
 });
 
 gulp.task('html', function () {
@@ -264,16 +265,17 @@ gulp.task('js', ['lint'], function() {
 
   return gulp.src(path.join(config.js.source_dir, config.js.files))
     .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
-    .pipe(sourcemaps.init())
-    .pipe(concat(config.js.dest_main_filename))
-    .pipe(gulpif(argv.prod !== undefined, uglify()))
-    .pipe(plumber.stop())
-    .pipe(gulpif(argv.prod !== undefined, rename({
-      suffix: (config.version !== null) ? '-' + config.version : ''
-    })))
+    .pipe(gulpif(argv.mode === 'prod', sourcemaps.init()))
+      .pipe(concat(config.js.dest_main_filename))
+      .pipe(gulpif(argv.prod !== undefined, uglify()))
+      .pipe(plumber.stop())
+      .pipe(gulpif(argv.prod !== undefined, rename({
+        suffix: (config.version !== null) ? '-' + config.version : ''
+      })))
+    .pipe(gulpif(argv.mode === 'prod', sourcemaps.write(config.js.maps_dir)))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
     .pipe(browserSync.reload({stream:true}))
-    .pipe(sourcemaps.write(config.js.maps_dir));
+    .pipe(plumber.stop())
 });
 
 gulp.task('browser-sync', function() {
