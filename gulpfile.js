@@ -115,8 +115,15 @@ defaults.browserSync.server.baseDir = defaults.build_dir;
 
 var config = deepmerge(defaults, require('./app.config.json'));
 
-if (argv['mode']) {
-  config = deepmerge(config, require('./' + argv['mode'] + '.config.json'));
+try {
+  if (argv['mode'] ) {
+    config = deepmerge(config, require('./' + argv['mode'] + '.config.json'));
+  }
+} catch(e) {
+  gulp
+    .src('')
+    .pipe(notify(e.message))
+  ;
 }
 
 //uncomment this line and comment the line before if you want to build the sdk
