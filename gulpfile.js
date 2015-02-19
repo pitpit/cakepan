@@ -23,7 +23,7 @@ var gulp = require('gulp')
 var defaults = {
 
   // version added only with prod option, can be set to null
-  version: '0.0.0',
+  version: null,
 
   //destination directory (dev only)
   build_dir: 'build/',
@@ -37,6 +37,9 @@ var defaults = {
 
   html_dir: null,
   twig_dir: 'src/twig',
+
+  // if you want to minified source pass it to true
+  compile: false,
 
   //less config, `null` to ignore it
   less: {
@@ -138,10 +141,10 @@ gulp.task('less', function () {
     .pipe(less({
       paths: config.less.includes_dir
     }))
-    .pipe(gulpif(argv.prod !== undefined, minifyCSS()))
+    .pipe(gulpif(argv.compile, minifyCSS()))
     .pipe(plumber.stop())
-    .pipe(gulpif(argv.prod !== undefined, rename({
-      suffix: (config.version !== null) ? '-' + config.version : ''
+    .pipe(gulpif(config.version !== null, rename({
+      suffix: '-' + config.version
     })))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.less.dest_dir)))
     .pipe(browserSync.reload({stream:true}))
@@ -159,7 +162,7 @@ gulp.task('html', function () {
       patterns: [
         {
           match: 'version',
-          replacement: (argv['prod'] && config.version !== null) ? '-' + config.version : ''
+          replacement: (config.version !== null) ? '-' + config.version : ''
         }
       ]
     }))
@@ -184,7 +187,7 @@ gulp.task('twig', function () {
         patterns: [
           {
             match: 'version',
-            replacement: (argv['prod'] && config.version !== null) ? '-' + config.version : ''
+            replacement: (config.version !== null) ? '-' + config.version : ''
           }
         ]
       }))
@@ -222,7 +225,7 @@ gulp.task('dump', function() {
 gulp.task('dumpjs', function() {
   var stream = gulp.src(config.js.dump);
 
-  if (argv.prod != undefined) {
+  if (argv.compile) {
     // .pipe(sourcemaps.init({loadMaps: true}))
     stream = stream.pipe(uglify())
     // .pipe(sourcemaps.write(config.js.maps_dir))
@@ -241,9 +244,9 @@ gulp.task('lint', function() {
 gulp.task('vendor-js', function() {
   return gulp.src(wiredep({ exclude: config.js.exclude_vendors.concat(config.js.dump) }).js)
     .pipe(concat(config.js.dest_vendor_filename))
-    .pipe(gulpif(argv.prod !== undefined, uglify()))
-    .pipe(gulpif(argv.prod !== undefined, rename({
-      suffix: (config.version !== null) ? '-' + config.version : ''
+    .pipe(gulpif(argv.compile, uglify()))
+    .pipe(gulpif(config.version !== null, rename({
+      suffix: '-' + config.version
     })))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
   ;
@@ -259,10 +262,10 @@ gulp.task('js', ['lint'], function() {
     .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
     .pipe(sourcemaps.init())
     .pipe(concat(config.js.dest_main_filename))
-    .pipe(gulpif(argv.prod !== undefined, uglify()))
+    .pipe(gulpif(argv.compile, uglify()))
     .pipe(plumber.stop())
-    .pipe(gulpif(argv.prod !== undefined, rename({
-      suffix: (config.version !== null) ? '-' + config.version : ''
+    .pipe(gulpif(config.version !== null, rename({
+      suffix: '-' + config.version
     })))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
     .pipe(browserSync.reload({stream:true}))
