@@ -20,6 +20,8 @@ var gulp = require('gulp')
     replace = require('gulp-replace-task')
 ;
 
+var booleanOptions = ['compile'];
+
 var defaults = {
 
   // version added only with prod option, can be set to null
@@ -121,6 +123,15 @@ var config = deepmerge(defaults, require('./app.config.json'));
 if (argv['mode']) {
   config = deepmerge(config, require('./' + argv['mode'] + '.config.json'));
 }
+
+// Overide config with option
+Object.keys(argv).forEach(function(item) {
+  if (item !== '_' && item !== 'mode') {
+    var obj = {};
+    obj[item] = (booleanOptions.indexOf(item) !== -1) ? (this[item] === 'true') : this[item];
+    config = deepmerge(config, obj);
+  }
+}, argv);
 
 //uncomment this line and comment the line before if you want to build the sdk
 // var config = deepmerge(defaults, require('./sdk.config.json'));
