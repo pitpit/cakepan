@@ -115,12 +115,16 @@ defaults.browserSync.server.baseDir = defaults.build_dir;
 
 var config = deepmerge(defaults, require('./app.config.json'));
 
-if (argv['mode']) {
-  config = deepmerge(config, require('./' + argv['mode'] + '.config.json'));
+try {
+  if (argv['mode'] ) {
+    config = deepmerge(config, require('./' + argv['mode'] + '.config.json'));
+  }
+} catch(e) {
+  gulp
+    .src('')
+    .pipe(notify(e.message))
+  ;
 }
-
-//uncomment this line and comment the line before if you want to build the sdk
-// var config = deepmerge(defaults, require('./sdk.config.json'));
 
 gulp.task('clean', function () {
   del.sync(path.join(config.build_dir, config.app_dir), {force: true});
@@ -134,18 +138,19 @@ gulp.task('less', function () {
 
   return gulp.src(path.join(config.less.source_dir, config.less.files))
     .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
-    .pipe(sourcemaps.init())
-    .pipe(less({
-      paths: config.less.includes_dir
-    }))
-    .pipe(gulpif(argv.prod !== undefined, minifyCSS()))
-    .pipe(plumber.stop())
-    .pipe(gulpif(argv.prod !== undefined, rename({
-      suffix: (config.version !== null) ? '-' + config.version : ''
-    })))
+    .pipe(gulpif(argv.mode === 'prod', sourcemaps.init()))
+      .pipe(less({
+        paths: config.less.includes_dir
+      }))
+      .pipe(gulpif(argv.prod !== undefined, minifyCSS()))
+      .pipe(gulpif(argv.prod !== undefined, rename({
+        suffix: (config.version !== null) ? '-' + config.version : ''
+      })))
+    .pipe(gulpif(argv.mode === 'prod', sourcemaps.write(config.less.maps_dir)))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.less.dest_dir)))
     .pipe(browserSync.reload({stream:true}))
-    .pipe(sourcemaps.write(config.less.maps_dir));
+    .pipe(plumber.stop())
+  ;
 });
 
 gulp.task('html', function () {
@@ -223,9 +228,7 @@ gulp.task('dumpjs', function() {
   var stream = gulp.src(config.js.dump);
 
   if (argv.prod != undefined) {
-    // .pipe(sourcemaps.init({loadMaps: true}))
     stream = stream.pipe(uglify())
-    // .pipe(sourcemaps.write(config.js.maps_dir))
   }
 
   return stream.pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
@@ -257,16 +260,17 @@ gulp.task('js', ['lint'], function() {
 
   return gulp.src(path.join(config.js.source_dir, config.js.files))
     .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
-    .pipe(sourcemaps.init())
-    .pipe(concat(config.js.dest_main_filename))
-    .pipe(gulpif(argv.prod !== undefined, uglify()))
-    .pipe(plumber.stop())
-    .pipe(gulpif(argv.prod !== undefined, rename({
-      suffix: (config.version !== null) ? '-' + config.version : ''
-    })))
+    .pipe(gulpif(argv.mode === 'prod', sourcemaps.init()))
+      .pipe(concat(config.js.dest_main_filename))
+      .pipe(gulpif(argv.prod !== undefined, uglify()))
+      .pipe(plumber.stop())
+      .pipe(gulpif(argv.prod !== undefined, rename({
+        suffix: (config.version !== null) ? '-' + config.version : ''
+      })))
+    .pipe(gulpif(argv.mode === 'prod', sourcemaps.write(config.js.maps_dir)))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
     .pipe(browserSync.reload({stream:true}))
-    .pipe(sourcemaps.write(config.js.maps_dir));
+    .pipe(plumber.stop())
 });
 
 gulp.task('browser-sync', function() {
@@ -297,7 +301,6 @@ gulp.task('start', ['default', 'browser-sync'], function() {
   gulp.watch(path.join(config.less.source_dir, '**/*.less'), ['less']);
   gulp.watch(['bower_components/', 'bower.json'], ['vendor-js']);
   gulp.watch(Object.keys(config.dump_files), ['dump']);
-  // gulp.watch('gulpfile.js', ['default']);
 });
 
 gulp.task('default', ['clean', 'less', 'html', 'twig', 'dump', 'dumpjs', 'vendor-js', 'js']);
