@@ -11,13 +11,14 @@ var gulp = require('gulp')
     argv = require('minimist')(process.argv.slice(2)),
     browserSync = require('browser-sync'),
     notify = require('gulp-notify')
-    twigger = require('gulp-twigger'),
+    twig = require('gulp-twig'),
     rename = require('gulp-rename'),
     merge = require('merge-stream'),
     sourcemaps = require('gulp-sourcemaps')
     deepmerge = require('deepmerge'),
     wiredep = require('wiredep'),
-    replace = require('gulp-replace-task')
+    replace = require('gulp-replace-task'),
+    data = require('gulp-data')
 ;
 
 var defaults = {
@@ -176,17 +177,17 @@ gulp.task('twig', function () {
 
   return gulp.src(path.join(config.twig_dir, '**/[^_]*.twig'))
       .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
-      .pipe(twigger({base: config.twig_dir}))
-      .pipe(rename(function (path) {
-        path.extname = ''; // strip the .twig extension
+      .pipe(data(function(file) {
+        return deepmerge(
+          require(path.dirname(file.path) + '/' + path.basename(file.path, '.html.twig') + '.vars.json'),
+          { version : (argv['prod'] && config.version !== null) ? '-' + config.version : '' }
+        );
       }))
-      .pipe(replace({
-        patterns: [
-          {
-            match: 'version',
-            replacement: (argv['prod'] && config.version !== null) ? '-' + config.version : ''
-          }
-        ]
+      .pipe(twig({
+        base: config.twig_dir
+      }))
+      .pipe(rename({
+        extname: ''
       }))
       .pipe(gulp.dest(config.build_dir))
       .pipe(plumber.stop())
