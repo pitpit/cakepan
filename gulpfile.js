@@ -212,15 +212,20 @@ gulp.task('dump', function() {
       .pipe(rename(function(filepath) {
         filepath.dirname = path.join(dest, filepath.dirname);
       }))
-      .pipe(gulp.dest(path.join(config.build_dir, config.app_dir)))
-      .pipe(browserSync.reload({stream:true}));
+    ;
 
     if (stream == null) {
       stream = newStream;
     } else {
       stream = merge(stream, newStream);
     }
+
   }, config.dump_files);
+
+  return stream
+    .pipe(browserSync.reload({stream:true}))
+    .pipe(gulp.dest(path.join(config.build_dir, config.app_dir)))
+  ;
 });
 
 //copy html5shiv as it
