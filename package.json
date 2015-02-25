@@ -29,6 +29,7 @@
     "gulp-plumber": "^0.6.5",
     "gulp-rename": "^1.2.0",
     "gulp-replace-task": "^0.1.0",
+    "gulp-ruby-sass": "^1.0.0-alpha.3",
     "gulp-sourcemaps": "^1.2.8",
     "gulp-twigger": "https://github.com/instantiate/gulp-twigger/tarball/master",
     "gulp-uglify": "^1.0.1",
