@@ -1,4 +1,5 @@
 {
+  "less": null,
   "dump_files": {
     "src/img/**/*.{gif,png,jpg}" : "img/",
     "src/fonts/**/*.{eot,svg,woff,ttf,otf}": "fonts/",
