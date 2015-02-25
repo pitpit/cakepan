@@ -1,0 +1,11 @@
+// Import library
+@import 'bootstrap-sprockets';
+@import 'bootstrap';
+@import 'font-awesome';
+
+// Import files
+@import 'variables';
+
+body {
+  margin-top: 20px;
+}
