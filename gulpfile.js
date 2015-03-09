@@ -1,6 +1,7 @@
 var gulp = require('gulp')
     path = require('path'),
     less = require('gulp-less'),
+    sass = require('gulp-ruby-sass'),
     jshint = require('gulp-jshint'),
     uglify = require('gulp-uglify'),
     concat = require('gulp-concat'),
@@ -11,13 +12,14 @@ var gulp = require('gulp')
     argv = require('minimist')(process.argv.slice(2)),
     browserSync = require('browser-sync'),
     notify = require('gulp-notify')
-    twigger = require('gulp-twigger'),
+    twig = require('gulp-twig'),
     rename = require('gulp-rename'),
     merge = require('merge-stream'),
     sourcemaps = require('gulp-sourcemaps')
     deepmerge = require('deepmerge'),
     wiredep = require('wiredep'),
-    replace = require('gulp-replace-task')
+    replace = require('gulp-replace-task'),
+    data = require('gulp-data')
 ;
 
 var booleanOptions = ['compile'];
@@ -43,7 +45,7 @@ var defaults = {
   // if you want to minified source pass it to true
   compile: false,
 
-  //less config, `null` to ignore it
+  //less config, `null` to ignore it in app.config.json
   less: {
     //where to look for included files
     includes_dir:  ['bower_components'],
@@ -59,6 +61,31 @@ var defaults = {
 
     //where to put maps files (prod only)
     maps_dir: '../maps/'
+  },
+
+  // sass config, `null` to ignore it in app.config.json
+  sass: {
+    // path source files
+    source_dir : 'src/sass/',
+
+    // main file dest dir
+    dest_dir: 'css/',
+
+    // map dir relative to dest_dir
+    maps_dir : '../maps/',
+
+    // main file to load
+    files : 'main.scss',
+
+    // css files to transform in scss
+    requires : [],
+
+    // lib to includes
+    includes : [
+      'src/sass/',
+      'bower_components/bootstrap-sass/assets/stylesheets',
+      'bower_components/fontawesome/scss'
+    ]
   },
 
   //files to dump (key is a glob, and value the destination sub-directory in app_dir)
@@ -120,8 +147,15 @@ defaults.browserSync.server.baseDir = defaults.build_dir;
 
 var config = deepmerge(defaults, require('./app.config.json'));
 
-if (argv['mode']) {
-  config = deepmerge(config, require('./' + argv['mode'] + '.config.json'));
+try {
+  if (argv['mode'] ) {
+    config = deepmerge(config, require('./' + argv['mode'] + '.config.json'));
+  }
+} catch(e) {
+  gulp
+    .src('')
+    .pipe(notify(e.message))
+  ;
 }
 
 // Overide config with option
@@ -132,9 +166,6 @@ Object.keys(argv).forEach(function(item) {
     config = deepmerge(config, obj);
   }
 }, argv);
-
-//uncomment this line and comment the line before if you want to build the sdk
-// var config = deepmerge(defaults, require('./sdk.config.json'));
 
 gulp.task('clean', function () {
   del.sync(path.join(config.build_dir, config.app_dir), {force: true});
@@ -149,17 +180,62 @@ gulp.task('less', function () {
   return gulp.src(path.join(config.less.source_dir, config.less.files))
     .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
     .pipe(sourcemaps.init())
-    .pipe(less({
-      paths: config.less.includes_dir
-    }))
-    .pipe(gulpif(argv.compile, minifyCSS()))
+      .pipe(less({
+        paths: config.less.includes_dir
+      }))
+      .pipe(gulpif(config.compile, minifyCSS()))
+      .pipe(gulpif(config.version !== null, rename({
+        suffix: '-' + config.version
+      })))
+    .pipe(gulpif(config.compile, sourcemaps.write(config.less.maps_dir)))
+    .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.less.dest_dir)))
     .pipe(plumber.stop())
+    .pipe(browserSync.reload({stream:true}))
+  ;
+});
+
+gulp.task('cssToScss', function() {
+
+  if (config.sass == null) {
+    return null;
+  }
+
+  var stream = null;
+
+  config.sass.requires.forEach(function(filepath) {
+    var newStream = gulp.src(path.join(filepath, '*.css'))
+      .pipe(rename({
+        extname: '.scss'
+      }))
+      .pipe(gulp.dest(filepath))
+    ;
+
+    stream = (stream !== null) ? mergestream(stream, newStream) : newStream;
+  });
+
+  return stream;
+});
+
+gulp.task('sass', ['cssToScss'], function() {
+
+  if (config.sass == null) {
+    return null;
+  }
+
+  return sass(path.join(config.sass.source_dir, config.sass.files), {
+      sourcemap: true,
+      loadPath: config.sass.includes.concat(config.sass.requires)
+    })
+    .pipe(plumber())
+    // .pipe(sourcemaps.write(config.sass.maps_dir))
+    .pipe(gulpif(config.compile, minifyCSS()))
     .pipe(gulpif(config.version !== null, rename({
       suffix: '-' + config.version
     })))
-    .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.less.dest_dir)))
+    .pipe(plumber.stop())
+    .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.sass.dest_dir)))
     .pipe(browserSync.reload({stream:true}))
-    .pipe(sourcemaps.write(config.less.maps_dir));
+  ;
 });
 
 gulp.task('html', function () {
@@ -189,22 +265,23 @@ gulp.task('twig', function () {
   }
 
   return gulp.src(path.join(config.twig_dir, '**/[^_]*.twig'))
-      .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
-      .pipe(twigger({base: config.twig_dir}))
-      .pipe(rename(function (path) {
-        path.extname = ''; // strip the .twig extension
-      }))
-      .pipe(replace({
-        patterns: [
-          {
-            match: 'version',
-            replacement: (config.version !== null) ? '-' + config.version : ''
-          }
-        ]
-      }))
-      .pipe(gulp.dest(config.build_dir))
-      .pipe(plumber.stop())
-      .pipe(browserSync.reload({stream:true}));
+    .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
+    .pipe(data(function(file) {
+      return deepmerge(
+        require(path.dirname(file.path) + '/' + path.basename(file.path, '.html.twig') + '.vars.json'),
+        { version : (config.version !== null) ? '-' + config.version : '' }
+      );
+    }))
+    .pipe(twig({
+      base: config.twig_dir
+    }))
+    .pipe(rename({
+      extname: ''
+    }))
+    .pipe(gulp.dest(config.build_dir))
+    .pipe(plumber.stop())
+    .pipe(browserSync.reload({stream:true}))
+  ;
 });
 
 gulp.task('dump', function() {
@@ -221,28 +298,28 @@ gulp.task('dump', function() {
       .pipe(rename(function(filepath) {
         filepath.dirname = path.join(dest, filepath.dirname);
       }))
-      .pipe(gulp.dest(path.join(config.build_dir, config.app_dir)))
-      .pipe(browserSync.reload({stream:true}));
+    ;
 
     if (stream == null) {
       stream = newStream;
     } else {
       stream = merge(stream, newStream);
     }
+
   }, config.dump_files);
+
+  return stream
+    .pipe(browserSync.reload({stream:true}))
+    .pipe(gulp.dest(path.join(config.build_dir, config.app_dir)))
+  ;
 });
 
 //copy html5shiv as it
 gulp.task('dumpjs', function() {
-  var stream = gulp.src(config.js.dump);
-
-  if (argv.compile) {
-    // .pipe(sourcemaps.init({loadMaps: true}))
-    stream = stream.pipe(uglify())
-    // .pipe(sourcemaps.write(config.js.maps_dir))
-  }
-
-  return stream.pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
+  return gulp.src(config.js.dump)
+    .pipe(gulpif(config.compile, uglify()))
+    .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
+  ;
 });
 
 gulp.task('lint', function() {
@@ -255,7 +332,7 @@ gulp.task('lint', function() {
 gulp.task('vendor-js', function() {
   return gulp.src(wiredep({ exclude: config.js.exclude_vendors.concat(config.js.dump) }).js)
     .pipe(concat(config.js.dest_vendor_filename))
-    .pipe(gulpif(argv.compile, uglify()))
+    .pipe(gulpif(config.compile, uglify()))
     .pipe(gulpif(config.version !== null, rename({
       suffix: '-' + config.version
     })))
@@ -272,15 +349,16 @@ gulp.task('js', ['lint'], function() {
   return gulp.src(path.join(config.js.source_dir, config.js.files))
     .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
     .pipe(sourcemaps.init())
-    .pipe(concat(config.js.dest_main_filename))
-    .pipe(gulpif(argv.compile, uglify()))
-    .pipe(plumber.stop())
-    .pipe(gulpif(config.version !== null, rename({
-      suffix: '-' + config.version
-    })))
+      .pipe(concat(config.js.dest_main_filename))
+      .pipe(gulpif(config.compile, uglify()))
+      .pipe(plumber.stop())
+      .pipe(gulpif(config.version !== null, rename({
+        suffix: '-' + config.version
+      })))
+    .pipe(gulpif(config.compile, sourcemaps.write(config.js.maps_dir)))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
     .pipe(browserSync.reload({stream:true}))
-    .pipe(sourcemaps.write(config.js.maps_dir));
+    .pipe(plumber.stop())
 });
 
 gulp.task('browser-sync', function() {
@@ -307,11 +385,17 @@ gulp.task('start', ['default', 'browser-sync'], function() {
     gulp.watch(config.proxy.watch_files, ['browser-sync-refresh']);
   }
 
+  if (config.less != null) {
+    gulp.watch(path.join(config.less.source_dir, '**/*.less'), ['less']);
+  }
+
+  if (config.sass != null) {
+    gulp.watch(path.join(config.sass.source_dir, '**/*.scss'), ['sass']);
+  }
+
   gulp.watch(path.join(config.js.source_dir, '**/*.js'), ['js']);
-  gulp.watch(path.join(config.less.source_dir, '**/*.less'), ['less']);
   gulp.watch(['bower_components/', 'bower.json'], ['vendor-js']);
   gulp.watch(Object.keys(config.dump_files), ['dump']);
-  // gulp.watch('gulpfile.js', ['default']);
 });
 
-gulp.task('default', ['clean', 'less', 'html', 'twig', 'dump', 'dumpjs', 'vendor-js', 'js']);
+gulp.task('default', ['clean', 'less', 'sass', 'html', 'twig', 'dump', 'dumpjs', 'vendor-js', 'js']);
