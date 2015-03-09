@@ -1,6 +1,7 @@
 var gulp = require('gulp')
     path = require('path'),
     less = require('gulp-less'),
+    sass = require('gulp-ruby-sass'),
     jshint = require('gulp-jshint'),
     uglify = require('gulp-uglify'),
     concat = require('gulp-concat'),
@@ -39,7 +40,7 @@ var defaults = {
   html_dir: null,
   twig_dir: 'src/twig',
 
-  //less config, `null` to ignore it
+  //less config, `null` to ignore it in app.config.json
   less: {
     //where to look for included files
     includes_dir:  ['bower_components'],
@@ -55,6 +56,31 @@ var defaults = {
 
     //where to put maps files (prod only)
     maps_dir: '../maps/'
+  },
+
+  // sass config, `null` to ignore it in app.config.json
+  sass: {
+    // path source files
+    source_dir : 'src/sass/',
+
+    // main file dest dir
+    dest_dir: 'css/',
+
+    // map dir relative to dest_dir
+    maps_dir : '../maps/',
+
+    // main file to load
+    files : 'main.scss',
+
+    // css files to transform in scss
+    requires : [],
+
+    // lib to includes
+    includes : [
+      'src/sass/',
+      'bower_components/bootstrap-sass/assets/stylesheets',
+      'bower_components/fontawesome/scss'
+    ]
   },
 
   //files to dump (key is a glob, and value the destination sub-directory in app_dir)
@@ -149,6 +175,50 @@ gulp.task('less', function () {
       })))
     .pipe(gulpif(argv.mode === 'prod', sourcemaps.write(config.less.maps_dir)))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.less.dest_dir)))
+    .pipe(browserSync.reload({stream:true}))
+    .pipe(plumber.stop())
+  ;
+});
+
+gulp.task('cssToScss', function() {
+
+  if (config.sass == null) {
+    return null;
+  }
+
+  var stream = null;
+
+  config.sass.requires.forEach(function(filepath) {
+    var newStream = gulp.src(path.join(filepath, '*.css'))
+      .pipe(rename({
+        extname: '.scss'
+      }))
+      .pipe(gulp.dest(filepath))
+    ;
+
+    stream = (stream !== null) ? mergestream(stream, newStream) : newStream;
+  });
+
+  return stream;
+});
+
+gulp.task('sass', ['cssToScss'], function() {
+
+  if (config.sass == null) {
+    return null;
+  }
+
+  return sass(path.join(config.sass.source_dir, config.sass.files), {
+      sourcemap: true,
+      loadPath: config.sass.includes.concat(config.sass.requires)
+    })
+    .pipe(plumber())
+    .pipe(sourcemaps.write(config.sass.maps_dir))
+    .pipe(gulpif(argv.prod !== undefined, minifyCSS()))
+    .pipe(gulpif(argv.prod !== undefined, rename({
+      suffix: '-' + config.version
+    })))
+    .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.sass.dest_dir)))
     .pipe(browserSync.reload({stream:true}))
     .pipe(plumber.stop())
   ;
@@ -303,10 +373,17 @@ gulp.task('start', ['default', 'browser-sync'], function() {
     gulp.watch(config.proxy.watch_files, ['browser-sync-refresh']);
   }
 
+  if (config.less != null) {
+    gulp.watch(path.join(config.less.source_dir, '**/*.less'), ['less']);
+  }
+
+  if (config.sass != null) {
+    gulp.watch(path.join(config.sass.source_dir, '**/*.scss'), ['sass']);
+  }
+
   gulp.watch(path.join(config.js.source_dir, '**/*.js'), ['js']);
-  gulp.watch(path.join(config.less.source_dir, '**/*.less'), ['less']);
   gulp.watch(['bower_components/', 'bower.json'], ['vendor-js']);
   gulp.watch(Object.keys(config.dump_files), ['dump']);
 });
 
-gulp.task('default', ['clean', 'less', 'html', 'twig', 'dump', 'dumpjs', 'vendor-js', 'js']);
+gulp.task('default', ['clean', 'less', 'sass', 'html', 'twig', 'dump', 'dumpjs', 'vendor-js', 'js']);
