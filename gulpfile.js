@@ -253,8 +253,16 @@ gulp.task('twig', function () {
   return gulp.src(path.join(config.twig_dir, '**/[^_]*.twig'))
       .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
       .pipe(data(function(file) {
+        var data;
+
+        try {
+          data = require(path.dirname(file.path) + '/' + path.basename(file.path, '.html.twig') + '.vars.json');
+        } catch(e) {
+          data = {};
+        }
+
         return deepmerge(
-          require(path.dirname(file.path) + '/' + path.basename(file.path, '.html.twig') + '.vars.json'),
+          data,
           { version : (argv['prod'] && config.version !== null) ? '-' + config.version : '' }
         );
       }))
