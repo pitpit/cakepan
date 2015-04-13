@@ -47,9 +47,9 @@ If you want to build the source:
     gulp
 
 
-If you want to build the source for the production, simply run:
+If you want to build the source for the production, simply run (gulpfile gonna try to load prod.config.json):
 
-    gulp --prod
+    gulp --mode=prod
 
 > take car it will erase every templates and every assets.
 
@@ -66,8 +66,12 @@ If you want to enable proxy mode set build\_dir, proxy.url, proxy.watch\_dir and
 
     gulp --mode=proxy
 
-> You can combine this with --prod option
-
 If you want to clean build directory:
 
     gulp clean
+
+If you want to override specific value from command line pass it as option:
+
+    gulp --compile=true
+
+> this gonna compile every assets
