@@ -22,10 +22,12 @@ var gulp = require('gulp')
     data = require('gulp-data')
 ;
 
+var booleanOptions = ['compile'];
+
 var defaults = {
 
   // version added only with prod option, can be set to null
-  version: '0.0.0',
+  version: null,
 
   //destination directory (dev only)
   build_dir: 'build/',
@@ -39,6 +41,9 @@ var defaults = {
 
   html_dir: null,
   twig_dir: 'src/twig',
+
+  // if you want to minified source pass it to true
+  compile: false,
 
   //less config, `null` to ignore it in app.config.json
   less: {
@@ -153,6 +158,15 @@ try {
   ;
 }
 
+// Overide config with option
+Object.keys(argv).forEach(function(item) {
+  if (item !== '_' && item !== 'mode') {
+    var obj = {};
+    obj[item] = (booleanOptions.indexOf(item) !== -1) ? (this[item] === 'true') : this[item];
+    config = deepmerge(config, obj);
+  }
+}, argv);
+
 gulp.task('clean', function () {
   del.sync(path.join(config.build_dir, config.app_dir), {force: true});
 });
@@ -165,18 +179,18 @@ gulp.task('less', function () {
 
   return gulp.src(path.join(config.less.source_dir, config.less.files))
     .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
-    .pipe(gulpif(argv.mode === 'prod', sourcemaps.init()))
+    .pipe(sourcemaps.init())
       .pipe(less({
         paths: config.less.includes_dir
       }))
-      .pipe(gulpif(argv.prod !== undefined, minifyCSS()))
-      .pipe(gulpif(argv.prod !== undefined, rename({
-        suffix: (config.version !== null) ? '-' + config.version : ''
+      .pipe(gulpif(config.compile, minifyCSS()))
+      .pipe(gulpif(config.version !== null, rename({
+        suffix: '-' + config.version
       })))
-    .pipe(gulpif(argv.mode === 'prod', sourcemaps.write(config.less.maps_dir)))
+    .pipe(gulpif(config.compile, sourcemaps.write(config.less.maps_dir)))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.less.dest_dir)))
-    .pipe(browserSync.reload({stream:true}))
     .pipe(plumber.stop())
+    .pipe(browserSync.reload({stream:true}))
   ;
 });
 
@@ -213,14 +227,14 @@ gulp.task('sass', ['cssToScss'], function() {
       loadPath: config.sass.includes.concat(config.sass.requires)
     })
     .pipe(plumber())
-    .pipe(sourcemaps.write(config.sass.maps_dir))
-    .pipe(gulpif(argv.prod !== undefined, minifyCSS()))
-    .pipe(gulpif(argv.prod !== undefined, rename({
+    // .pipe(sourcemaps.write(config.sass.maps_dir))
+    .pipe(gulpif(config.compile, minifyCSS()))
+    .pipe(gulpif(config.version !== null, rename({
       suffix: '-' + config.version
     })))
+    .pipe(plumber.stop())
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.sass.dest_dir)))
     .pipe(browserSync.reload({stream:true}))
-    .pipe(plumber.stop())
   ;
 });
 
@@ -235,7 +249,7 @@ gulp.task('html', function () {
       patterns: [
         {
           match: 'version',
-          replacement: (argv['prod'] && config.version !== null) ? '-' + config.version : ''
+          replacement: (config.version !== null) ? '-' + config.version : ''
         }
       ]
     }))
@@ -309,13 +323,10 @@ gulp.task('dump', function() {
 
 //copy html5shiv as it
 gulp.task('dumpjs', function() {
-  var stream = gulp.src(config.js.dump);
-
-  if (argv.prod != undefined) {
-    stream = stream.pipe(uglify())
-  }
-
-  return stream.pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
+  return gulp.src(config.js.dump)
+    .pipe(gulpif(config.compile, uglify()))
+    .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
+  ;
 });
 
 gulp.task('lint', function() {
@@ -328,9 +339,9 @@ gulp.task('lint', function() {
 gulp.task('vendor-js', function() {
   return gulp.src(wiredep({ exclude: config.js.exclude_vendors.concat(config.js.dump) }).js)
     .pipe(concat(config.js.dest_vendor_filename))
-    .pipe(gulpif(argv.prod !== undefined, uglify()))
-    .pipe(gulpif(argv.prod !== undefined, rename({
-      suffix: (config.version !== null) ? '-' + config.version : ''
+    .pipe(gulpif(config.compile, uglify()))
+    .pipe(gulpif(config.version !== null, rename({
+      suffix: '-' + config.version
     })))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
   ;
@@ -344,14 +355,14 @@ gulp.task('js', ['lint'], function() {
 
   return gulp.src(path.join(config.js.source_dir, config.js.files))
     .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
-    .pipe(gulpif(argv.mode === 'prod', sourcemaps.init()))
+    .pipe(sourcemaps.init())
       .pipe(concat(config.js.dest_main_filename))
-      .pipe(gulpif(argv.prod !== undefined, uglify()))
+      .pipe(gulpif(config.compile, uglify()))
       .pipe(plumber.stop())
-      .pipe(gulpif(argv.prod !== undefined, rename({
-        suffix: (config.version !== null) ? '-' + config.version : ''
+      .pipe(gulpif(config.version !== null, rename({
+        suffix: '-' + config.version
       })))
-    .pipe(gulpif(argv.mode === 'prod', sourcemaps.write(config.js.maps_dir)))
+    .pipe(gulpif(config.compile, sourcemaps.write(config.js.maps_dir)))
     .pipe(gulp.dest(path.join(config.build_dir, config.app_dir, config.js.dest_dir)))
     .pipe(browserSync.reload({stream:true}))
     .pipe(plumber.stop())
