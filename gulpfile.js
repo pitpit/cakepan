@@ -265,23 +265,30 @@ gulp.task('twig', function () {
   }
 
   return gulp.src(path.join(config.twig_dir, '**/[^_]*.twig'))
-    .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
-    .pipe(data(function(file) {
-      return deepmerge(
-        require(path.dirname(file.path) + '/' + path.basename(file.path, '.html.twig') + '.vars.json'),
-        { version : (config.version !== null) ? '-' + config.version : '' }
-      );
-    }))
-    .pipe(twig({
-      base: config.twig_dir
-    }))
-    .pipe(rename({
-      extname: ''
-    }))
-    .pipe(gulp.dest(config.build_dir))
-    .pipe(plumber.stop())
-    .pipe(browserSync.reload({stream:true}))
-  ;
+      .pipe(plumber({errorHandler: notify.onError("<%= error.name %>: <%= error.message %>")}))
+      .pipe(data(function(file) {
+        var data;
+
+        try {
+          data = require(path.dirname(file.path) + '/' + path.basename(file.path, '.html.twig') + '.vars.json');
+        } catch(e) {
+          data = {};
+        }
+
+        return deepmerge(
+          data,
+          { version : (argv['prod'] && config.version !== null) ? '-' + config.version : '' }
+        );
+      }))
+      .pipe(twig({
+        base: config.twig_dir
+      }))
+      .pipe(rename({
+        extname: ''
+      }))
+      .pipe(gulp.dest(config.build_dir))
+      .pipe(plumber.stop())
+      .pipe(browserSync.reload({stream:true}));
 });
 
 gulp.task('dump', function() {
