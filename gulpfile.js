@@ -401,7 +401,7 @@ gulp.task('start', ['default', 'browser-sync'], function() {
   }
 
   gulp.watch(path.join(config.js.source_dir, '**/*.js'), ['js']);
-  gulp.watch(['bower_components/', 'bower.json'], ['vendor-js']);
+  gulp.watch(['bower_components/**/*.js', 'bower.json'], ['vendor-js']);
   gulp.watch(Object.keys(config.dump_files), ['dump']);
 });
 
